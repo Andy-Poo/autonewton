@@ -1,7 +1,7 @@
 # autonewton
 SYNOPSIS
 
-A smart bot for chat rooms. Currently works on the Slack platorm.
+A smart bot for chat rooms. Currently works on the Slack platform.
 
 
 FEATURES
