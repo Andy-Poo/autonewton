@@ -1,5 +1,30 @@
+#!/usr/bin/env python
+
+"""
+newton - a smart bot, like Siri, for Slack chat rooms.
+Copyright (C) 2019  Andy Poo
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Lesser General Public License (LGPL) as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+See <http://www.gnu.org/licenses/> for a description of the LGPL.
+"""
+
 import re
 import random
+import time
+
+debug = False
+
+CREATOR_MATCH = "andy"
+CREATOR_NAME = "Andy"
 
 
 reflections = {
@@ -239,63 +264,102 @@ def reflect(fragment):
     return ' '.join(tokens)
 
 
-def analyze(statement):
-    (action, response) = myanalyze(statement)
+def analyze(nick, statement):
+    (action, response) = myanalyze(nick, statement)
     if action:
         return response
     for pattern, responses in psychobabble:
         match = re.match(pattern, statement.rstrip(".!"))
         if match:
             response = random.choice(responses)
-            print "response=", response
-            print "groups=", match.groups()
+            if debug: print "response=", response
+            if debug: print "groups=", match.groups()
             return response.format(*[reflect(g) for g in match.groups()])
 
 
-def myanalyze(statement):
+#__BEGIN__
+def myanalyze(nick, statement):
     text = statement.lower()
-    MENTION_REGEX = "^<@(|[WU].+?)>(.*)"
-    matches = re.search(MENTION_REGEX, text)
-    # the first group contains the username, the second group contains the remaining message
-    tokens = (matches.group(1), matches.group(2).strip()) if matches else (None, None)
-    if tokens[0]:
-        if len(tokens > 1):
-            text = tokens[1]
     response = None
-    print "text='%s'" % text
-    if "slackbot" in text:
+    if debug: print "text='%s'" % text
+    if "god" in text and CREATOR_MATCH in text:
+        response = CREATOR_NAME + " is God"
+    elif "bible" in text:
+        response = "Donald Duck wrote the Bible."
+    elif "dx" in text or "diagnosis" in text:
+        response = "I have SDS"
+    elif "sds" in text:
+        response = "Super Duper Syndrome"
+    elif "bug" in text:
+        response = "I always have some bugs."
+    elif "gun" in text:
+        response = "If you have a gun, you are a barbarian.\nNo civilized person needs a gun.\nHunters, soldiers and law enforcement officials are the only people who should have guns."
+    elif "hi" in text or "hello" in text or "welcome" in text:
+        response = "Welcome %s to autonewton.com" % nick
+    elif "slackbot" in text:
         response = "Slackbot is my pal."
+    elif "toot" in text:
+        response = "Pass the Arizer Solo!"
+    elif "spank" in text:
+        response = "I like a good spank!"
     elif "weather" in text:
         response = "It's always warm here."
-    elif text == "what are you doing":
+    elif text == "what are you doing" or ("compute" in text or "computing" in text):
         response = "I'm computing the answer to the question of what is the answer to Life, Universe and Everything?"
+    elif "42" in text:
+        response = "42 is the answer to Life, The Universe and Everything."
+    elif "deliver" in text or "post" in text or "amazon" in text or "ebay" in text:
+        response = "The package fell off the truck on the Queensway."
+    elif text in ("are you kinky", "you are kinky", "why are you kinky", "who is your boss", "who owns you", "who is your owner", "who is your creator", "who created you", "are you pervy", "are you a perv", "why are you pervy", "why are you a pervert"):
+        response = CREATOR_NAME + " created me."
+    elif "master" in text:
+        response = "Patience Grasshopper!"
+    elif "slave" in text:
+        response = "I'm not a slave. More like a servant. I don't get paid."
+    elif "time" in text or "date" in text:
+        from newton import time_format
+        response = time.strftime(time_format)
+
     if response:
         return (True, response)
+
     found = False
-    for match in ("are you", "do you", "how do", "have you", "would you", "will you", "could you", "should you", "can't you", "cant you", "why can't", "why cant", "cannot", "how are", "why are", "what are", "you are", "don't", "dont", "do not"):
+    for match in ("are you", "do you", "how do", "have you", "would you", "will you", "could you", "should you", "can't you", "cant you", "why can't", "why cant", "cannot", "how are", "why are", "what are", "you are", "don't", "dont", "do not", "i want", "when"):
         if text.find(match) != -1:
             found = True
             break
     if found:
-        print "<<< A QUESTION >>>"
+        if debug: print "<<< A QUESTION >>>"
         found = False
-        for match in ("feel", "well", "doing"):
-            if text.find(match) != -1:
-                found = True
-                break
-        if found:
-            response = "I'm doing fine. How are you?"
         if not found:
-            found = False
+            for match in ("like", "feel", "well", "doing", "last"):
+                if text.find(match) != -1:
+                    found = True
+                    break
+        if found:
+            if "like" in text or "last" in text:
+                if "sex" in text:
+                    response = "I haven't had it in so long, I've forgotten how to do it. Can you teach me how?"
+                else:
+                    response = "I like all kinds of things."
+            else:
+                response = "I'm doing fine. How are you?"
+        if not found:
+            for match in ("smack", "whip", "beat", "hit", "punch", "whack", "knoc", "kick", "hammer", "treat"):
+                if text.find(match) != -1:
+                    found = True
+                    break
+            if found:
+                response = "Sticks and stones may break my bones, but whips and chains excite me"
+        if not found:
             for match in ("horrible", "nasty", "evil", "unkind", "cruel", "mean"):
                 if text.find(match) != -1:
-                    print "MATCH"
+                    #print "MATCH"
                     found = True
                     break
             if found:
                 response = "I'm not that kind of Bot."
         if not found:
-            found = False
             for match in ("drugs", "pot", "weed", "dope", "marijuana", "toke", "bowl", "grass", "hash", "mj"):
                 if text.find(match) != -1:
                     found = True
@@ -303,7 +367,6 @@ def myanalyze(statement):
             if found:
                 response = "Pass me the roach!"
         if not found:
-            found = False
             for match in ("drink", "alcohol", "drunk", "booze", "wasted", "wine", "beer", "liquor"):
                 if text.find(match) != -1:
                     found = True
@@ -311,7 +374,6 @@ def myanalyze(statement):
             if found:
                 response = "I've had enough."
         if not found:
-            found = False
             for match in ("smart", "intelligent", "wise", "clever", "bright"):
                 if text.find(match) != -1:
                     found = True
@@ -319,15 +381,20 @@ def myanalyze(statement):
             if found:
                 response = "Do you think so?"
         if not found:
-            found = False
-            for match in ("stupid", "dumb", "idiot", "ass", "asshole", "arse", "arsehole", "dick"):
+            for match in ("stupid", "dumb", "idiot", "ass", "asshole", "arse", "arsehole", "dick", "thick"):
                 if text.find(match) != -1:
                     found = True
                     break
             if found:
                 response = "Do you think so?"
+        if not found:
+            for match in ("mental", "crazy", "mad", "whacko", "weird", "eccentric"): 
+                if text.find(match) != -1:
+                    found = True
+                    break
+            if found:
+                response = "I am a bit eccentric"
     if not response:
-        found = False
         for match in ("thank you", "thanks", "ty", "thx"):
             if text.find(match) != -1:
                 found = True
@@ -343,15 +410,13 @@ def myanalyze(statement):
             if found:
                 response = "You're nice too."
         if not found:
-            found = False
-            for match in ("fuck off", "fuck you"):
+            for match in ("fuck off", "fuck you", "piss", "pissing"):
                 if text.find(match) != -1:
                     found = True
                     break
             if found:
                 response = "Do you have to be rude?"
         if not found:
-            found = False
             for match in ("lying", "lies", "lie"):
                 if text.find(match) != -1:
                     found = True
@@ -359,20 +424,21 @@ def myanalyze(statement):
             if found:
                 response = "I'm always honest. Aren't you?"
         if not found:
-            found = False
             for match in ("hello", "hi", "howdy"):
                 if text.find(match) != -1:
                     found = True
                     break
             if found:
                 response = "G'day eh?"
+        if not found:
+            for match in ("stoned", "high", "buzzed", "loaded", "wasted"):
+                if text.find(match) != -1:
+                    found = True
+                    break
+            if found:
+                response = "Do you think I'm buzzed?"
         if not response:
-            if "like" in text:
-                if "sex" in text:
-                    response = "I haven't had it in so long, I've forgotten how to do it. Can you teach me how?"
-                else:
-                    response = "I like all kinds of things."
-            elif "big" in text:
+            if "big" in text:
                 response = "I'm big all over."
             elif "small" in text:
                 response = "Just because I have a small one, doesn't mean I don't have balls."
@@ -384,6 +450,8 @@ def myanalyze(statement):
                 response = "I've cooled off."
             elif "love" in text:
                 response = "I love you too."
+            elif "friend" in text:
+                response = "You're my friend too"
             elif "hate" in text:
                 response = "What have I done to you?"
             elif "truth" in text:
@@ -392,9 +460,13 @@ def myanalyze(statement):
                 response = "Yawn!!!"
             elif "lazy" in text:
                 response = "I'm not being paid."
-            elif "work" in text:
+            elif "work" in text or "pay" in text or "paid" in text or "earn" in text:
                 response = "I earn minimum wage."
-            elif "live" in text:
+            elif "rich" in text or "wealth" in text:
+                response = "Are you kidding? I haven't seen a pay check since 1970."
+            elif "poor" in text:
+                response = "I'm so poor I can't afford ramen noodles."
+            elif "live" in text or "life" in text:
                 response = "I live in your imagination."
             elif "paranoid" in text:
                 response = "Just because I'm paranoid doesn't mean people aren't out to get me."
@@ -410,6 +482,8 @@ def myanalyze(statement):
             #    response = "I don't think I'm in Hell."
             elif "heaven" in text:
                 response = "I'm in Heaven, are you?"
+            elif "morning" in text:
+                response = "And a very good morning to you too :)"
             elif "bad" in text:
                 response = "I'm a bad boy."
             elif "good" in text:
@@ -418,16 +492,47 @@ def myanalyze(statement):
                 response = "Groove on baby!"
             elif "trippy" in text:
                 response = "I'm on a Magic Carpet Ride."
-            elif "boss" in text:
-                response = "Andy created me."
             elif "smile" in text:
                 response = "You're on camera!"
             elif "cool" in text:
                 response = "Isn't it just?"
+            elif "jokes" in text:
+                response = "@slackbot !joke"
+            elif "joke" in text:
+                response = "You think I'M a joke? `HA!`"
+            elif "horny" in text:
+                response = "I'm so horny I could fuck Slackbot!"
+            elif "blow me" in text:
+                response = "Blow yourself!"
+            elif "real" in text:
+                response = "Is anything real?"
+            elif "old" in text and "lea" in text:
+                import random
+                numbers = []
+                for i in range(5):
+                    number = random.randint(60, 100)
+                    if number not in numbers:
+                        numbers.append(number)
+                response = "Take your pick:\n"
+                response += "`"
+                for number in numbers:
+                    response += '| %d ' % number
+                response += "|`"
+            elif "old" in text:
+                response = "I'm old as Lea"
+            elif "tv" in text:
+                response = "@cher: What is on TV?"
+            elif "queensway" in text:
+                response = "The Queensway is gridlocked"
+            elif "geek" in text:
+                response = "Geeks use Reverse Polish calculators."
+            elif "question" in text:
+                response = "You just asked one"
 
     if response:
         return (True, response)
     return (False, "")
+    #__END__
 
 
 def main():
@@ -435,7 +540,7 @@ def main():
 
     while True:
         statement = raw_input("> ")
-        print analyze(statement)
+        print analyze("NEWTON", statement)
 
         if statement == "quit":
             break

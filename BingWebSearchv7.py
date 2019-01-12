@@ -72,6 +72,6 @@ def Bing(term, youtube=False):
         for v in value[:3]:
             url = v['url']
             snippet = v['snippet']
-            result += '\n' + '='*10 + '%s\n%s' % (url, snippet)
+            result += '\n' + '='*10 + '\n%s\n%s' % (url, snippet)
     return result
 
