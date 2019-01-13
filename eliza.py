@@ -294,7 +294,7 @@ def myanalyze(nick, statement):
         response = "I always have some bugs."
     elif "gun" in text:
         response = "If you have a gun, you are a barbarian.\nNo civilized person needs a gun.\nHunters, soldiers and law enforcement officials are the only people who should have guns."
-    elif "hi" in text or "hello" in text or "welcome" in text:
+    elif "hello" in text or "welcome" in text:
         response = "Welcome %s to autonewton.com" % nick
     elif "slackbot" in text:
         response = "Slackbot is my pal."
@@ -424,7 +424,7 @@ def myanalyze(nick, statement):
             if found:
                 response = "I'm always honest. Aren't you?"
         if not found:
-            for match in ("hello", "hi", "howdy"):
+            for match in ("hello", "howdy"):
                 if text.find(match) != -1:
                     found = True
                     break
