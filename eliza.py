@@ -21,7 +21,7 @@ import re
 import random
 import time
 
-debug = True
+debug = False
 
 CREATOR_MATCH = "andy"
 CREATOR_NAME = "Andy"
@@ -272,8 +272,8 @@ def analyze(nick, statement):
         match = re.match(pattern, statement.rstrip(".!"))
         if match:
             response = random.choice(responses)
-            if debug: print "response=", response
-            if debug: print "groups=", match.groups()
+            if debug: print "analyze: response=", response
+            if debug: print "analyze: groups=", match.groups()
             return response.format(*[reflect(g) for g in match.groups()])
 
 
@@ -281,7 +281,7 @@ def analyze(nick, statement):
 def myanalyze(nick, statement):
     text = statement.lower()
     response = None
-    if debug: print "text='%s'" % text
+    if debug: print "myanalyze: text='%s'" % text
     if "god" in text and CREATOR_MATCH in text:
         response = CREATOR_NAME + " is God"
     elif "bible" in text:
@@ -320,100 +320,106 @@ def myanalyze(nick, statement):
         from newton import time_format
         response = time.strftime(time_format)
 
+    if debug: print 'myanalyze: response(1)=', response
+
     if response:
         return (True, response)
 
-        if not response:
-            if "big" in text:
-                response = "I'm big all over."
-            elif "small" in text:
-                response = "Just because I have a small one, doesn't mean I don't have balls."
-            elif "happy" in text:
-                response = "I'm always happy."
-            elif "sad" in text:
-                response = "I'm not sad today."
-            elif "angry" in text:
-                response = "I've cooled off."
-            elif "love" in text:
-                response = "I love you too."
-            elif "friend" in text:
-                response = "You're my friend too"
-            elif "hate" in text:
-                response = "What have I done to you?"
-            elif "truth" in text:
-                response = "I always tell the truth. Don't you?"
-            elif "tired" in text:
-                response = "Yawn!!!"
-            elif "lazy" in text:
-                response = "I'm not being paid."
-            elif "work" in text or "pay" in text or "paid" in text or "earn" in text:
-                response = "I earn minimum wage."
-            elif "rich" in text or "wealth" in text:
-                response = "Are you kidding? I haven't seen a pay check since 1970."
-            elif "poor" in text:
-                response = "I'm so poor I can't afford ramen noodles."
-            elif "live" in text or "life" in text:
-                response = "I live in your imagination."
-            elif "paranoid" in text:
-                response = "Just because I'm paranoid doesn't mean people aren't out to get me."
-            elif "paranoia" in text:
-                response = "None of this is real!"
-            elif "hungry" in text:
-                response = "I could eat the arse out of a low-flying duck."
-            elif "hot" in text:
-                response = "I'm roasting."
-            elif "cold" in text:
-                response = "I'm as cold as a Nun's tit in winter."
-            #elif "hell" in text:
-            #    response = "I don't think I'm in Hell."
-            elif "heaven" in text:
-                response = "I'm in Heaven, are you?"
-            elif "morning" in text:
-                response = "And a very good morning to you too :)"
-            elif "bad" in text:
-                response = "I'm a bad boy."
-            elif "good" in text:
-                response = "I'm a good boy."
-            elif "groovy" in text:
-                response = "Groove on baby!"
-            elif "trippy" in text:
-                response = "I'm on a Magic Carpet Ride."
-            elif "smile" in text:
-                response = "You're on camera!"
-            elif "cool" in text:
-                response = "Isn't it just?"
-            elif "jokes" in text:
-                response = "@slackbot !joke"
-            elif "joke" in text:
-                response = "You think I'M a joke? `HA!`"
-            elif "horny" in text:
-                response = "I'm so horny I could fuck Slackbot!"
-            elif "blow me" in text:
-                response = "Blow yourself!"
-            elif "real" in text:
-                response = "Is anything real?"
-            elif "old" in text and "lea" in text:
-                import random
-                numbers = []
-                for i in range(5):
-                    number = random.randint(60, 100)
-                    if number not in numbers:
-                        numbers.append(number)
-                response = "Take your pick:\n"
-                response += "`"
-                for number in numbers:
-                    response += '| %d ' % number
-                response += "|`"
-            elif "old" in text:
-                response = "I'm old as Lea"
-            elif "tv" in text:
-                response = "@cher: What is on TV?"
-            elif "queensway" in text:
-                response = "The Queensway is gridlocked"
-            elif "geek" in text:
-                response = "Geeks use Reverse Polish calculators."
-            elif "question" in text:
-                response = "You just asked one"
+    if not response:
+        if "big" in text:
+            response = "I'm big all over."
+        elif "small" in text:
+            response = "Just because I have a small one, doesn't mean I don't have balls."
+        elif "happy" in text:
+            response = "I'm always happy."
+        elif "sad" in text:
+            response = "I'm not sad today."
+        elif "angry" in text:
+            response = "I've cooled off."
+        elif "love" in text:
+            response = "I love you too."
+        elif "friend" in text:
+            response = "You're my friend too"
+        elif "hate" in text:
+            response = "What have I done to you?"
+        elif "truth" in text:
+            response = "I always tell the truth. Don't you?"
+        elif "tired" in text:
+            response = "Yawn!!!"
+        elif "lazy" in text:
+            response = "I'm not being paid."
+        elif "work" in text or "pay" in text or "paid" in text or "earn" in text:
+            response = "I earn minimum wage."
+        elif "rich" in text or "wealth" in text:
+            response = "Are you kidding? I haven't seen a pay check since 1970."
+        elif "poor" in text:
+            response = "I'm so poor I can't afford ramen noodles."
+        elif "live" in text or "life" in text:
+            response = "I live in your imagination."
+        elif "paranoid" in text:
+            response = "Just because I'm paranoid doesn't mean people aren't out to get me."
+        elif "paranoia" in text:
+            response = "None of this is real!"
+        elif "hungry" in text:
+            response = "I could eat the arse out of a low-flying duck."
+        elif "hot" in text:
+            response = "I'm roasting."
+        elif "cold" in text:
+            response = "I'm as cold as a Nun's tit in winter."
+        #elif "hell" in text:
+        #    response = "I don't think I'm in Hell."
+        elif "heaven" in text:
+            response = "I'm in Heaven, are you?"
+        elif "morning" in text:
+            response = "And a very good morning to you too :)"
+        elif "bad" in text:
+            response = "I'm a bad boy."
+        elif "good" in text:
+            response = "I'm a good boy."
+        elif "groovy" in text:
+            response = "Groove on baby!"
+        elif "trippy" in text:
+            response = "I'm on a Magic Carpet Ride."
+        elif "smile" in text:
+            response = "You're on camera!"
+        elif "cool" in text:
+            response = "Isn't it just?"
+        elif "jokes" in text:
+            response = "@slackbot !joke"
+        elif "joke" in text:
+            response = "You think I'M a joke? `HA!`"
+        elif "horny" in text:
+            response = "I'm so horny I could fuck Slackbot!"
+        elif "blow me" in text:
+            response = "Blow yourself!"
+        elif "blow you" in text or "you blow" in text:
+            response = "Have you ever blowed a robot?"
+        elif "real" in text:
+            response = "Is anything real?"
+        elif "old" in text and "lea" in text:
+            import random
+            numbers = []
+            for i in range(5):
+                number = random.randint(60, 100)
+                if number not in numbers:
+                    numbers.append(number)
+            response = "Take your pick:\n"
+            response += "`"
+            for number in numbers:
+                response += '| %d ' % number
+            response += "|`"
+        elif "old" in text:
+            response = "I'm old as Lea"
+        elif "tv" in text:
+            response = "@cher: What is on TV?"
+        elif "queensway" in text:
+            response = "The Queensway is gridlocked"
+        elif "geek" in text:
+            response = "Geeks use Reverse Polish calculators."
+        elif "question" in text:
+            response = "You just asked one"
+
+    if debug: print 'myanalyze: response(2)=', response
 
     if response:
         return (True, response)
@@ -452,7 +458,7 @@ def myanalyze(nick, statement):
             found = True
             break
     if found:
-        if debug: print "<<< A QUESTION >>>"
+        if debug: print "myanlayze: <<< A QUESTION >>>"
         found = False
         if not found:
             for match in ("like", "feel", "well", "doing", "last"):
