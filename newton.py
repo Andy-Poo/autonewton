@@ -1304,7 +1304,7 @@ class Newton:
                     time_y = time_d / 365.25
                     time_h = int(time_x / (60*60))
                     time_s = time_x % 60
-                    time_m = int(time_x - time_h*60*60 - time_s)/60
+                    time_m = abs(int(time_x - time_h*60*60 - time_s)/60)
                     result = '%.1f years\n' % time_y
                     result += '%.1f days\n' % time_d
                     result += '%d : %02d : %02d hours\n' % (time_h, time_m, time_s)

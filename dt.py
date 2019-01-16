@@ -184,7 +184,7 @@ def dt(expression):
         if debug: print 'dt: time_x=', time_x
         if debug: print 'dt: hours=', time_h
         time_s = time_x % 60
-        time_m = int(time_x - time_h*60*60 - time_s)/60
+        time_m = abs(int(time_x - time_h*60*60 - time_s)/60)
         if debug: print 'dt: time_m=', time_m
         if info: print 'dt: years=', time_y
         if info: print 'dt: days=', time_d
