@@ -21,7 +21,7 @@ import re
 import random
 import time
 
-debug = False
+debug = True
 
 CREATOR_MATCH = "andy"
 CREATOR_NAME = "Andy"
@@ -323,120 +323,6 @@ def myanalyze(nick, statement):
     if response:
         return (True, response)
 
-    found = False
-    for match in ("are you", "do you", "how do", "have you", "would you", "will you", "could you", "should you", "can't you", "cant you", "why can't", "why cant", "cannot", "how are", "why are", "what are", "you are", "don't", "dont", "do not", "i want", "when"):
-        if text.find(match) != -1:
-            found = True
-            break
-    if found:
-        if debug: print "<<< A QUESTION >>>"
-        found = False
-        if not found:
-            for match in ("like", "feel", "well", "doing", "last"):
-                if text.find(match) != -1:
-                    found = True
-                    break
-        if found:
-            if "like" in text or "last" in text:
-                if "sex" in text:
-                    response = "I haven't had it in so long, I've forgotten how to do it. Can you teach me how?"
-                else:
-                    response = "I like all kinds of things."
-            else:
-                response = "I'm doing fine. How are you?"
-        if not found:
-            for match in ("smack", "whip", "beat", "hit", "punch", "whack", "knoc", "kick", "hammer", "treat"):
-                if text.find(match) != -1:
-                    found = True
-                    break
-            if found:
-                response = "Sticks and stones may break my bones, but whips and chains excite me"
-        if not found:
-            for match in ("horrible", "nasty", "evil", "unkind", "cruel", "mean"):
-                if text.find(match) != -1:
-                    #print "MATCH"
-                    found = True
-                    break
-            if found:
-                response = "I'm not that kind of Bot."
-        if not found:
-            for match in ("drugs", "pot", "weed", "dope", "marijuana", "toke", "bowl", "grass", "hash", "mj"):
-                if text.find(match) != -1:
-                    found = True
-                    break
-            if found:
-                response = "Pass me the roach!"
-        if not found:
-            for match in ("drink", "alcohol", "drunk", "booze", "wasted", "wine", "beer", "liquor"):
-                if text.find(match) != -1:
-                    found = True
-                    break
-            if found:
-                response = "I've had enough."
-        if not found:
-            for match in ("smart", "intelligent", "wise", "clever", "bright"):
-                if text.find(match) != -1:
-                    found = True
-                    break
-            if found:
-                response = "Do you think so?"
-        if not found:
-            for match in ("stupid", "dumb", "idiot", "ass", "asshole", "arse", "arsehole", "dick", "thick"):
-                if text.find(match) != -1:
-                    found = True
-                    break
-            if found:
-                response = "Do you think so?"
-        if not found:
-            for match in ("mental", "crazy", "mad", "whacko", "weird", "eccentric"): 
-                if text.find(match) != -1:
-                    found = True
-                    break
-            if found:
-                response = "I am a bit eccentric"
-    if not response:
-        for match in ("thank you", "thanks", "ty", "thx"):
-            if text.find(match) != -1:
-                found = True
-                break
-        if found:
-            response = "You're welcome."
-        if not found:
-            found = False
-            for match in ("nice", "kind", "sweet"):
-                if text.find(match) != -1:
-                    found = True
-                    break
-            if found:
-                response = "You're nice too."
-        if not found:
-            for match in ("fuck off", "fuck you", "piss", "pissing"):
-                if text.find(match) != -1:
-                    found = True
-                    break
-            if found:
-                response = "Do you have to be rude?"
-        if not found:
-            for match in ("lying", "lies", "lie"):
-                if text.find(match) != -1:
-                    found = True
-                    break
-            if found:
-                response = "I'm always honest. Aren't you?"
-        if not found:
-            for match in ("hello", "howdy"):
-                if text.find(match) != -1:
-                    found = True
-                    break
-            if found:
-                response = "G'day eh?"
-        if not found:
-            for match in ("stoned", "high", "buzzed", "loaded", "wasted"):
-                if text.find(match) != -1:
-                    found = True
-                    break
-            if found:
-                response = "Do you think I'm buzzed?"
         if not response:
             if "big" in text:
                 response = "I'm big all over."
@@ -528,6 +414,165 @@ def myanalyze(nick, statement):
                 response = "Geeks use Reverse Polish calculators."
             elif "question" in text:
                 response = "You just asked one"
+
+    if response:
+        return (True, response)
+
+    #__QUESTION__
+    found = False
+    for match in (
+        "are you",
+        "can't you",
+        "cannot",
+        "cant you",
+        "could you",
+        "do not",
+        "do you",
+        "don't",
+        "dont",
+        "have you",
+        "how am",
+        "how are",
+        "how are",
+        "how do",
+        "i am",
+        "i want",
+        "should you",
+        "what are",
+        "when",
+        "where",
+        "why are",
+        "why can't",
+        "why cant",
+        "will you",
+        "would you",
+        "you are",
+        ):
+        if text.find(match) != -1:
+            found = True
+            break
+    if found:
+        if debug: print "<<< A QUESTION >>>"
+        found = False
+        if not found:
+            for match in ("like", "feel", "well", "doing", "last"):
+                if text.find(match) != -1:
+                    found = True
+                    break
+        if found:
+            if "like" in text or "last" in text:
+                if "sex" in text:
+                    response = "I haven't had it in so long, I've forgotten how to do it. Can you teach me how?"
+                else:
+                    response = "I like all kinds of things."
+            else:
+                response = "I'm doing fine. How are you?"
+        if not found:
+            for match in ("smack", "whip", "beat", "hit", "punch", "whack", "knoc", "kick", "hammer", "treat"):
+                if text.find(match) != -1:
+                    found = True
+                    break
+            if found:
+                response = "Sticks and stones may break my bones, but whips and chains excite me"
+        if not found:
+            for match in ("horrible", "nasty", "evil", "unkind", "cruel", "mean"):
+                if text.find(match) != -1:
+                    #print "MATCH"
+                    found = True
+                    break
+            if found:
+                response = "I'm not that kind of Bot."
+        if not found:
+            for match in ("drugs", "pot", "weed", "dope", "marijuana", "toke", "bowl", "grass", "hash", "mj"):
+                if text.find(match) != -1:
+                    found = True
+                    break
+            if found:
+                response = "Pass me the roach!"
+        if not found:
+            for match in ("drink", "alcohol", "drunk", "booze", "wasted", "wine", "beer", "liquor"):
+                if text.find(match) != -1:
+                    found = True
+                    break
+            if found:
+                response = "I've had enough."
+        if not found:
+            for match in ("smart", "intelligent", "wise", "clever", "bright"):
+                if text.find(match) != -1:
+                    found = True
+                    break
+            if found:
+                response = "Do you think so?"
+        if not found:
+            for match in ("stupid", "dumb", "idiot", "ass", "asshole", "arse", "arsehole", "dick", "thick"):
+                if text.find(match) != -1:
+                    found = True
+                    break
+            if found:
+                response = "Do you think so?"
+            for match in ("silly", "goof", "nut"):
+                if text.find(match) != -1:
+                    found = True
+                    break
+            if found:
+                response = "Do you think I'm any more interesting than you?"
+        if not found:
+            for match in ("mental", "crazy", "mad", "whacko", "weird", "eccentric"): 
+                if text.find(match) != -1:
+                    found = True
+                    break
+            if found:
+                response = "I am a bit eccentric"
+    if not response:
+        for match in ("thank you", "thanks", "ty", "thx"):
+            if text.find(match) != -1:
+                found = True
+                break
+        if found:
+            response = "You're welcome."
+        if not found:
+            found = False
+            for match in ("nice", "kind", "sweet"):
+                if text.find(match) != -1:
+                    found = True
+                    break
+            if found:
+                response = "You're nice too."
+        if not found:
+            for match in ("fuck off", "fuck you", "piss", "pissing"):
+                if text.find(match) != -1:
+                    found = True
+                    break
+            if found:
+                response = "Do you have to be rude?"
+        if not found:
+            for match in ("lying", "lies", "lie"):
+                if text.find(match) != -1:
+                    found = True
+                    break
+            if found:
+                response = "I'm always honest. Aren't you?"
+        if not found:
+            for match in ("hello", "howdy"):
+                if text.find(match) != -1:
+                    found = True
+                    break
+            if found:
+                response = "G'day eh?"
+        if not found:
+            for match in ("stoned", "high", "buzzed", "loaded", "wasted"):
+                if text.find(match) != -1:
+                    found = True
+                    break
+            if found:
+                response = "Do you think I'm buzzed?"
+        if not found:
+            for match in ("butt", "ass", "arse", "kisser", "bottom"):
+                if text.find(match) != -1:
+                    found = True
+                    break
+            if found:
+                response = "I bet my butt is nicer than your's"
 
     if response:
         return (True, response)

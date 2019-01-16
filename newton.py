@@ -350,7 +350,7 @@ class NewtonThread(threading.Thread):
 
         cmd : method
             The method that will be executed later.
-        arg : str
+        arg : str or other type
             The argument that will be passed to the method.
         method : str
             The type of web request that is desired.
@@ -418,6 +418,16 @@ class NewtonThread(threading.Thread):
             method_type = 'text/plain'
         elif method == 'json':
             method_type = 'application/json'
+        # 2019/01/16 (AJE): this is a hack but works for my needs for now
+        return_tuple = False
+        if isinstance(url, tuple) or isinstance(url, list):
+            # the url will have been stored in the first entry in the list or tuple
+            # and the remaining arguments will be returned in a tuple in the content
+            args = url[1:]
+            url = url[0]
+            return_tuple = True
+        else:
+            args = (None,)
         request = urllib2.Request(url)
         request.add_header('Accept', method_type)
         request.add_header('User-Agent', 'Mozilla/5.0')
@@ -428,6 +438,8 @@ class NewtonThread(threading.Thread):
             result = 'Error: %s\n%s\n' % (str(e), url)
             print 'NewtonThread::webrequest:', result
             result = None
+        if return_tuple:
+            return (result,) + args
         return result
 
     def run(self):
@@ -486,6 +498,8 @@ class Newton:
         self.users = None
         # this is time in UNIX time_t when the bot started up
         self.time0 = 0
+        self.distanceQuery1 = ''
+        self.distanceQuery2 = ''
         # this is the instance of the thread we will use for background web requests
         self.newtonThread = NewtonThread()
         # start the background thread running
@@ -658,7 +672,6 @@ class Newton:
 
         return (result, pageid)
 
-
     def wikiurl(self, pageid):
         """Perform a Wikipedia lookup given the page identifier.
 
@@ -707,7 +720,6 @@ class Newton:
 
         #print 'Newton::wikiurl: url=', url
         return url
-
 
     def weather(self, query):
         """Perform a lookup for a weather report.
@@ -797,6 +809,103 @@ class Newton:
         result += '%s\n' % description
         #result += 'Sunrise: %s\n' % sunrise
         #return (result, lat, lon)
+        return result
+
+    def distance(self, args):
+        """Calculate the distance between any two cities by straight line disance
+
+        query : str
+            The locations of the two places for the report.
+        """
+        if debug: print 'Newton::distance: args=', args
+        result = ''
+        query = ''.join(args)
+        if not query:
+            return result
+        if '=' in query:
+            mysplit = query.split('=')
+        elif ';' in query:
+            mysplit = query.split(';')
+        else:
+            return result
+        query1 = mysplit[0].strip()
+        query2 = mysplit[1].strip()
+        if debug: print 'distance: query1=', query1
+        if debug: print 'distance: query2=', query2
+        # this is needed for distanceHandler2
+        self.distanceQuery1 = query1
+        self.distanceQuery2 = query2
+        weather_api_key = os.environ.get('WEATHER_API_KEY')
+        url = html_escape('https://api.openweathermap.org/data/2.5/weather?q=%s' % query1)
+        url += '&appid=%s' % weather_api_key
+        self.newtonThread.enqueue(self.distanceHandler1, url)
+
+    def distanceHandler1(self, content):
+        """This handles the distance report response that came back from the weather website.
+
+        content : str
+            The web content data to parse.
+        """
+        if debug: print 'Newton::distanceHandler1: content=', content
+        lon = 0
+        lat = 0
+        try:
+            # Warning: this is a potential security risk:
+            values = eval(content)
+            lon = values['coord']['lon']
+            lat = values['coord']['lat']
+        except Exception as e:
+            print 'Newton::distanceHandler1: Error:', e
+            return None
+        # the place name was stored in this attribute in method "distance"
+        query2 = self.distanceQuery2
+        weather_api_key = os.environ.get('WEATHER_API_KEY')
+        url = html_escape('https://api.openweathermap.org/data/2.5/weather?q=%s' % query2)
+        url += '&appid=%s' % weather_api_key
+        item = (url, lat, lon,)
+        self.newtonThread.enqueue(self.distanceHandler2, item)
+
+    def distanceHandler2(self, content):
+        """This handles the second distance report response that came back from the weather website.
+
+        content : str
+            A tuple containing the web content data to parse
+            and the latitude and longitude values which were passed in by
+            distanceHandler1
+        """
+        if debug: print 'Newton::distanceHandler2: content=', content
+        # 2019/01/16 (AJE): this is how I handled passing the latitude and logitude
+        # result back from the first call to the weather service API
+        lat1 = content[1]
+        lon1 = content[2]
+        content = content[0]
+
+        # get the result for the latitude and longitude from the second web request
+        lon2 = 0
+        lat2 = 0
+        try:
+            # Warning: this is a potential security risk:
+            values = eval(content)
+            lon2 = values['coord']['lon']
+            lat2 = values['coord']['lat']
+        except Exception as e:
+            print 'Newton::distanceHandler2: Error:', e
+            return None
+
+        place1 = self.distanceQuery1
+        place2 = self.distanceQuery2
+        result = 'Distance between %s and %s is:\n' % (place1, place2)
+        R = 6371e3      # metres
+        phi1 = math.radians(lat1)
+        phi2 = math.radians(lat2)
+        delta_phi = math.radians(lat2 - lat1)
+        delta_lambda = math.radians(lon2 - lon1)
+        a = math.sin(delta_phi/2) * math.sin(delta_phi/2) + \
+            math.cos(phi1) * math.cos(phi2) * \
+            math.sin(delta_lambda/2) * math.sin(delta_lambda/2)
+        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+        dist = R * c
+        result += '%.0f km (%.0f miles)' % (dist/1000.0, dist/1.609344/1000.0)
         return result
 
     def calculate(self, equation):
@@ -954,50 +1063,6 @@ class Newton:
         lyric = soup.getlyricresult.lyric.string
         if debug: print lyric
         result = lyric
-        return result
-
-    def distance(self, query):
-        """This is for future use to compute the straight-line distance between any two towns.
-
-        query : str
-            The string to parse for the two towns.
-
-        Returns:
-            str : The computed distance.
-        """
-
-        result = ''
-        """
-        queryargs = ' '.join(tokens[1:])
-        query = queryargs.split(';')
-        query1 = query[0]
-        query2 = query[1]
-        if debug: print 'distance: query1=', query1
-        if debug: print 'distance: query2=', query2
-        (result, lat1, lon1) = self.weather(query1)
-        if debug: print 'distance: query1: result=', result
-        if debug: print 'distance: query1: lat1', lat1
-        if debug: print 'distance: query1: lon1', lon1
-        (result, lat2, lon2)  = self.weather(query2)
-        if debug: print 'distance: query2: result=', result
-        if debug: print 'distance: query2: lat2', lat2
-        if debug: print 'distance: query2: lon2', lon2
-        #result = 'Latitude=%.2f, Longitude=%.2f' % (
-                #(lat2 - lat1), (lon2 - lon1))
-        result = ''
-        R = 6371e3      # metres
-        phi1 = math.radians(lat1)
-        phi2 = math.radians(lat2)
-        delta_phi = math.radians(lat2 - lat1)
-        delta_lambda = math.radians(lon2 - lon1)
-        a = math.sin(delta_phi/2) * math.sin(delta_phi/2) + \
-            math.cos(phi1) * math.cos(phi2) * \
-            math.sin(delta_lambda/2) * math.sin(delta_lambda/2)
-        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-        dist = R * c
-        result += '\ndistance = %.0f km (%.0f miles)' % (
-                dist/1000.0, dist/1.609344/1000.0)
-        """
         return result
 
     def parse_bot_commands(self, slack_events):
@@ -1244,6 +1309,8 @@ class Newton:
                     result += '%.1f days\n' % time_d
                     result += '%d : %02d : %02d hours\n' % (time_h, time_m, time_s)
                     result += "%d seconds\n" % time_x
+                else:
+                    result = "invalid date format or date out of range"
 
             elif command in ('calendar', 'cal'):
                 tm_year = time.localtime().tm_year

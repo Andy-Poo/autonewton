@@ -66,6 +66,9 @@ def tokenize(text):
 
 def parse(text, time_now):
     if debug: print 'parse: text=', text
+    text = text.replace('midnight', '00:00')
+    text = text.replace('midnite', '00:00')
+    text = text.replace('noon', '12:00')
     found = False
     count = 0
     last = 0
@@ -86,6 +89,19 @@ def parse(text, time_now):
         if text == 'now':
             tm = time.localtime(time_now)
             found = True
+            """
+            print 'text=', text
+            tm = time.localtime(time_now)
+            tm_year = tm.tm_year
+            tm_mon = tm.tm_mon
+            tm_mday = tm.tm_mday
+            if text == 'noon':
+                tm_hour = 12
+            else:
+                tm_hour = 0
+            tm = (tm_year, tm_mon, tm_mday, tm_hour, 0, 0, tm.tm_wday, tm.tm_yday, tm.tm_isdst)
+            found = True
+            """
         else:
             for fmt in formats:
                 #print 'dt: fmt=', fmt
