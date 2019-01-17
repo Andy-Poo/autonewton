@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # current program version:
-VERSION = '2.1'
+VERSION = '3.0'
 
 import glob
 import os

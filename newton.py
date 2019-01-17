@@ -56,6 +56,9 @@ try:
 except ImportError as e:
     print e
 
+# this is used by the "Animal Game"
+import animal
+
 # this mess is used by a game to print a rolled dice using ASCII art
 dice = [
 # 1
@@ -268,6 +271,51 @@ RTM_READ_DELAY = 1 # 1 second delay between reading from RTM
 MENTION_REGEX = "^<@(|[WwUu].+?)>(.*)"
 MENTIONR_REGEX = "(.*)<@(|[WwUu].+?)>"
 
+
+def find_nick(user_id, users):
+    """Find the nickname (username) of a user by Slack user ID.
+
+    user_id : str
+        the Slack user ID.
+    users : list
+        the Slack list of members
+
+    Returns:
+        str : The user's nickname.
+    """
+    nick = "autonewton"
+    ids = []
+    for u in users:
+        ids.append(u['id'])
+    if user_id in ids:
+        for u in users:
+            if user_id == u['id']:
+                nick = u['profile']['display_name']
+                break
+    return nick
+
+def replace_mentions(text, users):
+    """Replace "mentions" like @andy with the user's nickname.
+
+    text : str
+        the text to search
+    users : list
+        the Slack list of members
+
+    Returns:
+        str : the substituded text
+    """
+    if debug: print 'replace_mentions: text=', text
+    while True:
+        match = re.search(MENTIONR_REGEX, text)
+        if not match:
+            break
+        username = match.group(2)
+        #text = match.group(1)
+        nick = find_nick(username, users)
+        text = text.replace("<@%s>" % username, nick)
+    if debug: print 'replace_mentions: new text=', text
+    return text
 
 import math
 import operator
@@ -498,6 +546,8 @@ class Newton:
         self.users = None
         # this is time in UNIX time_t when the bot started up
         self.time0 = 0
+        # this is a counter for the animal game
+        self.countdown = 0
         self.distanceQuery1 = ''
         self.distanceQuery2 = ''
         # this is the instance of the thread we will use for background web requests
@@ -514,6 +564,8 @@ class Newton:
         """This is the main method which stays running until the bot is terminated.
         """
         self.time0 = time.time()
+        animal.animal_load()
+        self.countdown = 0
         if self.slack_client.rtm_connect(with_team_state=False):
             print time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(self.time0))
             #print("Starter Bot connected and running!")
@@ -540,6 +592,31 @@ class Newton:
                 if channel:
                     # save the channel for dequeuing messages
                     self.channel = channel
+                if self.channel:
+                    if self.countdown == 0:
+                        if debug:
+                            # random interval between 30 and 120 seconds
+                            low = 30
+                            high = 120
+                        else:
+                            # random interval between 5 and 30 minutes
+                            low = 60*5
+                            high = 60*20
+                        self.countdown = random.randint(low, high)
+                        if debug: print 'Newton::slack: countdown=', self.countdown
+                        reply = animal.animal_game()
+                        self.post_message(self.channel, reply)
+                    self.countdown -= 1
+                    tm = time.localtime()
+                    if debug2: print 'Newton::slack: tm=', time.asctime(tm)
+                    # is it the top of the hour (or top of the minute if debug)
+                    if tm.tm_sec == 0 and (debug or tm.tm_min == 0):
+                        if debug: print 'Newton::slack: chime'
+                        reply = animal.animal_game_chime()
+                        self.post_message(self.channel, reply)
+                        # save the database often
+                        animal.animal_dump()
+                        
                 if command:
                     # process the command
                     reply = self.handle_command(command, self.channel)
@@ -598,6 +675,45 @@ class Newton:
 
         # Sends the response back to the channel
         self.post_message(channel, response)
+
+    def members(self, user_id=None):
+        """Get a list of Slack members.
+
+        user_id : str
+            the Slack user ID.
+
+        Returns:
+            str : human-readable list of members
+        """
+        result = ''
+        for u in self.users:
+            #pp = pprint.PrettyPrinter(indent=4)
+            #pp.pprint(u)
+            if user_id is None or u['id'] == user_id:
+                uid = u['id']
+                nick = u['name']
+                is_admin = False
+                if 'is_admin' in u:
+                    admin = u['is_admin']
+                tz_lable = ''
+                if 'tz_label' in u:
+                    tz_label = u['tz_label']
+                name = ''
+                if 'display_name' in u['profile']:
+                    name = u['profile']['display_name']
+                status_emoji = ''
+                if 'status_emoji' in u['profile']:
+                    status_emoji = u['profile']['status_emoji']
+                status_text = ''
+                if 'status_text' in u['profile']:
+                    status_text = u['profile']['status_text']
+                email = ''
+                if 'email' in u['profile']:
+                    email = u['profile']['email']
+                result += "\n`%s` : %s, Admin=%s, ID=%s, <%s> %s" % (
+                    nick, name, admin, uid, tz_label, email)
+                result += "\n    %s %s" % (status_emoji, status_text)
+        return result
 
     def bing(self, query, youtube=False):
         """Perform a Bing lookup on bing.com
@@ -920,26 +1036,6 @@ class Newton:
         if debug: print 'Newton::calulate: equation=', equation
         return rp_calculate(equation)
 
-    def find_nick(self, user_id):
-        """Find the nickname (username) of a user by Slack user ID.
-
-        user_id : str
-            The Slack user ID.
-
-        Returns:
-            str : The user's nickname.
-        """
-        nick = "autonewton"
-        ids = []
-        for u in self.users:
-            ids.append(u["id"])
-        if user_id in ids:
-            for u in self.users:
-                if user_id == u["id"]:
-                    nick = u["profile"]["display_name"]
-                    break
-        return nick
-
     def find_time(self, user_id):
         """Find the time where a Slack member is located.
 
@@ -952,11 +1048,11 @@ class Newton:
         result = ""
         ids = []
         for u in self.users:
-            ids.append(u["id"])
+            ids.append(u['id'])
         if user_id in ids:
             for u in self.users:
-                if user_id == u["id"]:
-                    tz_offset = u["tz_offset"]
+                if user_id == u['id']:
+                    tz_offset = u['tz_offset']
                     time_t = time.time()
                     time_gm = time.gmtime(time_t)
                     time_local = time.localtime(time_t)
@@ -1100,7 +1196,7 @@ class Newton:
                     if match:
                         username = match.group(2)
                         text = match.group(1)
-                        nick = find_nick(username)
+                        nick = find_nick(username, self.users)
                     else:
                         text = message
                         nick = 'ALL'
@@ -1165,6 +1261,15 @@ class Newton:
             elif command == 'help':
                 result = bot_help
 
+            elif command in ('members', 'member'):
+                user_id = None
+                if len(tokens) > 1:
+                    token = tokens[1]
+                    m = pat1.search(token)
+                    if m:
+                        user_id = m.group(1)
+                result = self.members(user_id)
+
             elif command == 'joke':
                 self.joke()
 
@@ -1189,7 +1294,7 @@ class Newton:
                 m = pat1.search(token)
                 if m:
                     user_id = m.group(1)
-                    nick = self.find_nick(user_id)
+                    nick = find_nick(user_id, self.users)
                 else:
                     nick = token
                 result = "((( " + nick + " )))"
@@ -1352,6 +1457,12 @@ class Newton:
                         count += 1
                 result += '|'
 
+            elif command in animal.animal_commands:
+                query = ' '.join(tokens[1:])
+                nickname = find_nick(user, self.users)
+                query = replace_mentions(query, self.users)
+                result = animal.animal_command_handler(nickname, command, query)
+
             elif command == 'bot':
                 if len(tokens) < 2:
                     result = bot_help
@@ -1363,6 +1474,8 @@ class Newton:
                         from version import version
                         result = version()
                     elif bot_command in ('quit', 'kill'):
+                        # save the animal stats before exiting
+                        animal.animal_dump()
                         self.newtonThread.kill()
                         sys.exit(0)
                     elif bot_command == 'log':
