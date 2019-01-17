@@ -78,10 +78,13 @@ animal_person = None
 # also save the nickname before it gets cleared
 animal_person_prev = None
 
+# and save the animal that was saved
+animal_last = None
+
 # command to save and kill animals. for example,
 # !save
 # !kill
-animal_save_commands = ['save', 'bef']
+animal_save_commands = ['save', 'befriend', 'bef']
 animal_kill_commands = ['kill', 'bang', 'club', 'ak47', 'shoot']
 animal_commands = ['stats', 'animal', 'animals', 'win', 'winner', 'won']
 animal_commands += animal_save_commands 
@@ -154,6 +157,7 @@ def animal_game(item=None):
     if debug: print 'animal_game: item=', item
     if debug: print 'animal_game: animal_person=', animal_person
     if debug: print 'animal_game: animal_person_prev=', animal_person_prev
+    if debug: print 'animal_game: animal_last=', animal_last
     # set the animal person for the new game
     animal_person = 'newton'
     if item is None:
@@ -179,10 +183,11 @@ def animal_save(user):
     user : str
         the nickname of the user
     """
-    global animal_person, animal_person_prev
+    global animal_person, animal_person_prev, animal_last
     if debug: print 'animal_save: user=', user
     if debug: print 'animal_save: animal_person=', animal_person
     if debug: print 'animal_save: animal_person_prev=', animal_person_prev
+    if debug: print 'animal_save: animal_last=', animal_last
     # if the animal was already saved, then do nothing
     #if animal_person is None or animal_person_prev is None:
     if animal_person is None:
@@ -332,9 +337,9 @@ def animal_winner(user, action=None):
         elif action is 'query':
             result = "\n`%s` WON" % animal_person_prev
         elif action is 'save':
-            result = "\n%s saved an animal. Good job!" % animal_person_prev
+            result = "\n%s saved a %s. Good job!" % (animal_person_prev, animal_last)
         elif action is 'kill':
-            result = "\n%s killed an animal. You must be hungry." % animal_person_prev
+            result = "\n%s killed a %s. You must be hungry." % (animal_person_prev, animal_last)
     return result
 
 def animal_command_handler(user, command, query):

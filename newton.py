@@ -1244,6 +1244,7 @@ class Newton:
         Returns:
             str : The result of the command.
         """
+        global debug, debug2
         if debug: print 'Newton::parse_command: text, user=', text, user
         result = None
         if re.search("^!", text):
@@ -1470,6 +1471,15 @@ class Newton:
                     bot_command = tokens[1]
                     if bot_command == 'ping':
                         result = "I'm alive!"
+                    elif bot_command in ('debug', 'debug2', 'off'):
+                        if bot_command == 'debug2':
+                            debug = debug2 = True
+                        elif bot_command == 'debug':
+                            debug = True
+                            debug2 = False
+                        elif bot_command == 'off':
+                            debug = False
+                            debug2 = False
                     elif bot_command in ('version', 'ver'):
                         from version import version
                         result = version()

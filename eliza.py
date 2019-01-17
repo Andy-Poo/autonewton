@@ -418,6 +418,8 @@ def myanalyze(nick, statement):
             response = "Geeks use Reverse Polish calculators."
         elif "question" in text:
             response = "You just asked one"
+        elif "bacon" in text:
+            response = "Is there anything better than bacon?"
 
     if debug: print 'myanalyze: response(2)=', response
 
