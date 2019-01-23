@@ -155,22 +155,30 @@ These are my commands:
     !bot date,!bot time - See what time it is where the bot is located.
     !bot uptime - See how long the bot has been up.
 
-!bing, !b - Get the 3 top links for a subject.
-!google, !g - Get the 3 top links for a subject.
-    !b what is a bitcoin?
+!search, !s, !duck, !bing, !b, !google, !g
+    Perform a DuckDuckGo web search.
+    Get the 3 top links for a subject.
+    !s what is a bitcoin?
+
+!bing, !b - Perform a Bing web search
+    !b slack
 
 !wiki - Get a Wikipedia article on a subject.
     !wiki san francisco
 
 !youtube, !y - Get the top 3 videos for a subject.
     !y madonna, vogue
+    Currently not working.
 
 !lyrics, !lyric, !l - Get the song lyrics for a song.
     Must be in the format:
-        !lyrics artist=song
-        !lyrics the beatles=eleanor rigby
+        !lyrics artist;song
+        !lyrics the beatles;eleanor rigby
 
 !weather, !w - Get the weather for a city in the World.
+
+!members, !member - Get the list of members or a specific member.
+    !member @cher
 
 !calendar, !cal - Get a calendar for a month.
     !cal dec
@@ -271,6 +279,13 @@ RTM_READ_DELAY = 1 # 1 second delay between reading from RTM
 MENTION_REGEX = "^<@(|[WwUu].+?)>(.*)"
 MENTIONR_REGEX = "(.*)<@(|[WwUu].+?)>"
 
+def abort():
+    """Do a clean exit.
+    """
+    # save the animal stats before exiting
+    animal.animal_dump()
+    newtonThread.kill()
+    sys.exit(0)
 
 def find_nick(user_id, users):
     """Find the nickname (username) of a user by Slack user ID.
@@ -368,6 +383,9 @@ def rp_calculate(equation):
                     result = ops[i](math.radians(n1))
                     stack.insert(0,str(result))
     return '%.2f' % result
+
+# global variable holding the NewtonThread instance
+newtonThread = None
 
 # this class handles background processing of web requests
 class NewtonThread(threading.Thread):
@@ -536,6 +554,7 @@ class Newton:
     This class implements the bot.
     """
     def __init__(self):
+        global newtonThread
         # obtain the slack client via newton.sh which you need to modify for your installation
         self.slack_client = SlackClient(os.environ.get('SLACK_BOT_TOKEN'))
         # starterbot's user ID in Slack: value is assigned after the bot starts up
@@ -551,7 +570,7 @@ class Newton:
         self.distanceQuery1 = ''
         self.distanceQuery2 = ''
         # this is the instance of the thread we will use for background web requests
-        self.newtonThread = NewtonThread()
+        newtonThread = self.newtonThread = NewtonThread()
         # start the background thread running
         self.newtonThread.start()
 
@@ -599,7 +618,7 @@ class Newton:
                             low = 30
                             high = 120
                         else:
-                            # random interval between 5 and 30 minutes
+                            # random interval between 5 and 20 minutes
                             low = 60*5
                             high = 60*20
                         self.countdown = random.randint(low, high)
@@ -716,7 +735,7 @@ class Newton:
         return result
 
     def bing(self, query, youtube=False):
-        """Perform a Bing lookup on bing.com
+        """Perform a web search lookup on bing.com
 
         query : str
             The query search string.
@@ -728,6 +747,20 @@ class Newton:
         """
         from BingWebSearchv7 import Bing
         return Bing(query, youtube=youtube)
+
+    def duck(self, query, youtube=False):
+        """Perform a web search lookup on duckduckgo.com
+
+        query : str
+            The query search string.
+        youtube : bool
+            True if doing a lookup for a YouTube video.
+
+        Returns:
+            str - The text result of the lookup.
+        """
+        from DuckDuckGoSearch import Duck
+        return Duck(query, youtube=youtube)
 
     def wiki(self, query):
         """Peform a Wikipedia lookup on wikipedia.com,
@@ -883,7 +916,11 @@ class Newton:
             pressure = values['main']['pressure']
             temp_min = values['main']['temp_min']
             temp_max = values['main']['temp_max']
-            visibility = values['visibility']
+            # visibility is sometimes missing
+            try:
+                visibility = values['visibility']
+            except Exception as e:
+                print 'Newton::weatherHandler: Error:', e
             wind_speed = values['wind']['speed']
             name = values['name']
             country = values['sys']['country']
@@ -1089,6 +1126,8 @@ class Newton:
         soup = BeautifulSoup(content)
         if debug2: print soup.prettify()
         text = soup.text
+        text = text.replace('&euro;', '')
+        text = text.replace('&trade;', '')
         return text
 
     def lyrics(self, args):
@@ -1277,11 +1316,18 @@ class Newton:
             elif command in ('lyrics', 'lyric', 'l'):
                 self.lyrics(tokens[1:])
 
-            elif command in ('bing', 'b', 'google', 'g', 'youtube', 'y'):
+            elif command in ('bing', 'b'):
                 query = ' '.join(tokens[1:])
-                youtube = command in ('youtube', 'y')
-                result = self.bing(query, youtube=youtube)
+                result = self.bing(query, youtube=False)
 
+            elif command in ('search', 's', 'duck', 'google', 'g'):
+                query = ' '.join(tokens[1:])
+                result = self.duck(query)
+
+            elif command in ('youtube', 'y'):
+                query = ' '.join(tokens[1:])
+                result = self.bing(query, youtube=True)
+                
             elif command == 'wiki':
                 query = ' '.join(tokens[1:])
                 (result, pageid) = self.wiki(query)
@@ -1472,6 +1518,7 @@ class Newton:
                     if bot_command == 'ping':
                         result = "I'm alive!"
                     elif bot_command in ('debug', 'debug2', 'off'):
+                        self.countdown = 0
                         if bot_command == 'debug2':
                             debug = debug2 = True
                         elif bot_command == 'debug':
@@ -1484,10 +1531,7 @@ class Newton:
                         from version import version
                         result = version()
                     elif bot_command in ('quit', 'kill'):
-                        # save the animal stats before exiting
-                        animal.animal_dump()
-                        self.newtonThread.kill()
-                        sys.exit(0)
+                        abort()
                     elif bot_command == 'log':
                         # print the log file
                         result = ''
@@ -1538,9 +1582,27 @@ class Newton:
         return result
     #__END__ commands
 
+def atexit_handler():
+    """Handles exits from newton gracefully.
+    """
+    import traceback
+    traceback.print_exc()
+    traceback.print_stack()
+    abort()
+    sys.exit()
+
 # is this file being executed from the command line?
 if __name__ == "__main__":
+    import atexit
+    atexit.register(atexit_handler)
     import logging
     logging.basicConfig(level=logging.ERROR)
-    newton = Newton()
-    newton.slack()
+    try:
+        newton = Newton()
+        newton.slack()
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        traceback.print_stack()
+        abort()
+        

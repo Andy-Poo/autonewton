@@ -54,6 +54,7 @@ animals = {
     'pig2': ['oink', 0, 0],
     'poodle': ['yap', 0, 0],
     'rabbit2': ['squeak', 0, 0],
+    'racehorse': ['neigh', 0, 0],
     'rat': ['squeak', 0, 0],
     'rooster': ['cock-a-doodle-do', 0, 0],
     'sheep': ['baa', 0, 0],
@@ -332,14 +333,15 @@ def animal_winner(user, action=None):
             else:
                 result = "\n`%s` WON" % animal_person_prev
     else:
+        the_animal = animal_strip(animal_last).upper()
         if action is None:
             result = "\nTOO LATE"
         elif action is 'query':
             result = "\n`%s` WON" % animal_person_prev
         elif action is 'save':
-            result = "\n%s saved a %s. Good job!" % (animal_person_prev, animal_last)
+            result = "\n%s saved a %s. Good job!" % (animal_person_prev, the_animal)
         elif action is 'kill':
-            result = "\n%s killed a %s. You must be hungry." % (animal_person_prev, animal_last)
+            result = "\n%s killed a %s. You must be hungry." % (animal_person_prev, the_animal)
     return result
 
 def animal_command_handler(user, command, query):
@@ -403,8 +405,13 @@ def animal_load():
     global animals, animal_stats
     if debug: print 'animal_load:', animal_database
     try:
+        animals_old = animals
         data = pickle.load(open(animal_database, "rb"))
         animals, animal_stats = data
+        # add any new animals
+        for animal in animals_old:
+            if animal not in animals:
+                animals[animal] = animals_old[animal]
     except Exception as e:
         print 'animal_save: Error:', e
 

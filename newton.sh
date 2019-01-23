@@ -5,6 +5,7 @@
 export SLACK_BOT_TOKEN="xoxb-12345678901-123456789012-xabcd01234ABCD0000000000"
 
 # these are the API keys specific to your installation
+export BING_SEARCH_KEY="somehexadecimalstring"
 export WEATHER_API_KEY="somehexadecimalstring"
 
 # get the Python virtualenv

@@ -12,7 +12,10 @@ from urllib import quote_plus
 # **********************************************
 
 # Replace the subscriptionKey string value with your valid subscription key.
-subscriptionKey = "2e57f72b36e74f43b2482aa459587a2c"
+#subscriptionKey = "somehexadecimalstring"
+import os
+subscriptionKey = os.environ.get('BING_SEARCH_KEY')
+
 
 # Verify the endpoint URI.  At this writing, only one endpoint is used for Bing
 # search APIs.  In the future, regional endpoints may be available.  If you
@@ -40,30 +43,31 @@ def BingWebSearch(search):
 def Bing(term, youtube=False):
     headers, result = BingWebSearch(term)
     data = json.loads(result)
-    if youtube:
-        page = data['videos']
-    else:
-        page = data['webPages']
-
+    #import pprint
+    #pp = pprint.PrettyPrinter(indent=4)
+    #pp.pprint(data)
+    try:
+        if youtube and 'images' in data:
+            page = data['images']
+        else:
+            page = data['webPages']
+    except Exception as e:
+        print 'Bing: Error:', e
+        return ''
     #import pprint
     #pp = pprint.PrettyPrinter(indent=4)
     #pp.pprint(page)
     
     value = page['value']
-
-    """
-    for v in value:
-        url = v['url']
-        print 'url=', url
-        snippet = v['snippet']
-        print 'snippet=', snippet
-    """
-
     result = ''
     count = 0
     if youtube:
         for v in value:
-            url = v['contentUrl']
+            #url = v['contentUrl']
+            if 'hostPageUrl' in v:
+                url = v['hostPageUrl']
+            elif 'displayUrl' in v:
+                url = v['displayUrl']
             if 'youtube' in url:
                 count += 1
                 if count <= 3:
