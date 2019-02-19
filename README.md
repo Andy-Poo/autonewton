@@ -113,22 +113,29 @@ finding lots of bugs.
 
 RELEASE NOTES
 
-3.2
-- Add better exception handling and ensure bot can always terminate.
-- Get Bing and Youtube lookups working again.
-- Fixes to the Animal Game.
+2.0
+- First official release of autonewton.
+- Changed code to object-oriented and added docstrings.
 
-3.1
-- Added the members command.
+2.1
+- Fixes to Eliza.
 
 3.0
 - Added background processing of web requests in a background thread
 to prevent the bot from hanging if a web server does not respond.
 - Added the Animal Game.
 
-2.1
-- Fixes to Eliza.
+3.1
+- Added the members command.
 
-2.0
-- First official release of autonewton.
-- Changed code to object-oriented and added docstrings.
+3.2
+- Add better exception handling and ensure bot can always terminate.
+- Get Bing and Youtube lookups working again.
+- Fixes to the Animal Game.
+
+3.3
+- Never released.
+
+3.4
+- Bug fixes.
+- Add debug logging to the animal and eliza modules.

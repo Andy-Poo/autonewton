@@ -138,6 +138,15 @@ def animal_debug(flag):
     global debug
     debug = flag
 
+def animal_enable(flag=True):
+    """Enable the playing of the animal game.
+
+    flag : bool
+        True to enable, False to disable
+    """
+    global animal_enabled
+    animal_enabled = flag
+
 def animal_name(animal):
     """Converts the animal name into a human-readable name.
 
@@ -499,7 +508,6 @@ def animal_command_handler(user, command, query):
     Returns:
         str : the text result
     """
-    global animal_enabled
     global animal_method
     if debug: print 'animal_command_handler: user=', user
     if debug: print 'animal_command_handler: command=', command
@@ -512,10 +520,12 @@ def animal_command_handler(user, command, query):
     else:
         arg = 'newton'
     # enable or disable the animal game
-    if command == 'off':
-        animal_enabled = False
-    elif command == 'on':
-        animal_enabled = True
+    if query == 'off':
+        if debug: print 'animal_command_handler: animal OFF'
+        animal_enable(False)
+    elif query == 'on':
+        if debug: print 'animal_command_handler: animal ON'
+        animal_enable(True)
     elif command in animal_save_commands:
         if animal_save(user):
             action = 'save'
@@ -569,15 +579,6 @@ def animal_load():
                     animals[animal] = animals_old[animal]
         except Exception as e:
             print 'animal_load: Error:', e
-
-def animal_enable(flag=True):
-    """Enable the playing of the animal game.
-
-    flag : Bool
-        True to enable, False to disable
-    """
-    global animal_enabled
-    animal_enabled = flag
 
 
 # are we running this script from the command line?

@@ -624,18 +624,20 @@ class Newton:
                             high = 60*20
                         self.countdown = random.randint(low, high)
                         if debug: print 'Newton::slack: countdown=', self.countdown
-                        reply = animal.animal_game()
+                        if animal.animal_enabled:
+                            reply = animal.animal_game()
                         self.post_message(self.channel, reply)
                     self.countdown -= 1
                     tm = time.localtime()
                     if debug2: print 'Newton::slack: tm=', time.asctime(tm)
                     # is it the top of the hour (or top of the minute if debug)
                     if tm.tm_sec == 0 and (debug or tm.tm_min == 0):
-                        if debug: print 'Newton::slack: chime'
-                        reply = animal.animal_game_chime()
-                        self.post_message(self.channel, reply)
-                        # save the database often
-                        animal.animal_dump()
+                        if animal.animal_enabled:
+                            if debug: print 'Newton::slack: chime'
+                            reply = animal.animal_game_chime()
+                            self.post_message(self.channel, reply)
+                            # save the database often
+                            animal.animal_dump()
                         
                 if command:
                     # process the command
@@ -1510,6 +1512,10 @@ class Newton:
                 nickname = find_nick(user, self.users)
                 query = replace_mentions(query, self.users)
                 result = animal.animal_command_handler(nickname, command, query)
+                # if we are turning the animal game on or off,
+                # reset the countdown timer
+                if query in ('off', 'on'):
+                    self.countdown = 0
 
             elif command == 'bot':
                 if len(tokens) < 2:
