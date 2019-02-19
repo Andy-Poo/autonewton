@@ -20,9 +20,13 @@ See <http://www.gnu.org/licenses/> for a description of the LGPL.
 # flags for turning on debugging diagnostics
 debug = False
 
+# enable or disable the playing of the animal game
+animal_enabled = False
+
 # animal "database" to save stats during bot restarts
 animal_database = "/home/andy/data/newton.pickle"
 
+import os.path
 import re
 import random
 import pickle
@@ -36,32 +40,61 @@ The dictionary items consist of these objects:
 [0] the sound the animal makes
 [1] the number of times the animal was saved
 [2] the number of times the animal was killed
+[3] the method of killing
 """
 animals = {
-    'bear': ['growl', 0, 0],
-    'camel': ['snort', 0, 0],
-    'cat2': ['meow', 0, 0],
-    'cow2': ['moo', 0, 0],
-    'dog2': ['woof', 0, 0],
-    'elephant': ['trumpet', 0, 0],
-    'goat': ['bleat', 0, 0],
-    'koala': ['grunt', 0, 0],
-    'leopard': ['growl', 0, 0],
-    'monkey': ['chatter', 0, 0],
-    'mouse': ['squeak', 0, 0],
-    'ox': ['moo', 0, 0],
-    'penguin': ['coo', 0, 0],
-    'pig2': ['oink', 0, 0],
-    'poodle': ['yap', 0, 0],
-    'rabbit2': ['squeak', 0, 0],
-    'racehorse': ['neigh', 0, 0],
-    'rat': ['squeak', 0, 0],
-    'rooster': ['cock-a-doodle-do', 0, 0],
-    'sheep': ['baa', 0, 0],
-    'snake': ['hiss', 0, 0],
-    'tiger2': ['growl', 0, 0],
-    'water_buffalo': ['moo', 0, 0],
-    'wolf': ['howl', 0, 0]
+    'alien': ['screech', 0, 0, {}],
+    'hatched_chick': ['cheep', 0, 0, {}],
+    'ant': ['scurry', 0, 0, {}],
+    'bear': ['growl', 0, 0, {}],
+    'bee': ['buzz', 0, 0, {}],
+    'camel': ['snort', 0, 0, {}],
+    'cat2': ['meow', 0, 0, {}],
+    'cow2': ['moo', 0, 0, {}],
+    'dog2': ['woof', 0, 0, {}],
+    'elephant': ['trumpet', 0, 0, {}],
+    'flag-ca': ['canadian', 0, 0, {}],
+    'goat': ['bleat', 0, 0, {}],
+    'koala': ['grunt', 0, 0, {}],
+    'leopard': ['growl', 0, 0, {}],
+    'male-doctor': ['psychiatrist', 0, 0, {}],
+    'male-firefighter': ['fire', 0, 0, {}],
+    'man': ['car salesman', 0, 0, {}],
+    'monkey': ['chatter', 0, 0, {}],
+    'mouse': ['squeak', 0, 0, {}],
+    'ox': ['moo', 0, 0, {}],
+    'penguin': ['coo', 0, 0, {}],
+    'person_with_headscarf': ['jehovas witness', 0, 0, {}],
+    'pig2': ['oink', 0, 0, {}],
+    'poodle': ['yap', 0, 0, {}],
+    'rabbit2': ['squeak', 0, 0, {}],
+    'racehorse': ['neigh', 0, 0, {}],
+    'rat': ['squeak', 0, 0, {}],
+    'rooster': ['cock-a-doodle-do', 0, 0, {}],
+    'sheep': ['baa', 0, 0, {}],
+    'snake': ['hiss', 0, 0, {}],
+    'spider': ['eek', 0, 0, {}],
+    'tiger2': ['growl', 0, 0, {}],
+    'turtle': ['silence', 0, 0, {}],
+    'water_buffalo': ['moo', 0, 0, {}],
+    'whale': ['blow', 0, 0, {}],
+    'wolf': ['howl', 0, 0, {}],
+    'chipmunk': ['squeak', 0, 0, {}],
+    'frog': ['ribbit', 0, 0, {}],
+    'fish': ['bubble', 0, 0, {}],
+    'crab': ['itch', 0, 0, {}],
+    'octopus': ['blurp', 0, 0, {}],
+    'giraffe_face': ['chew', 0, 0, {}],
+    'panda_face': ['nibble', 0, 0, {}],
+    'butterfly': ['flutter', 0, 0, {}],
+    'eagle': ['screech', 0, 0, {}],
+    'bat': ['screech', 0, 0, {}],
+    'hedgehog': ['russel', 0, 0, {}],
+    'duck': ['quack', 0, 0, {}],
+    'sauropod': ['roar', 0, 0, {}],
+    'owl': ['hoot', 0, 0, {}],
+    'snail': ['squirm', 0, 0, {}],
+    'beetle': ['burrow', 0, 0, {}]
 }
 
 # this is the stats per user and the user entries
@@ -82,19 +115,31 @@ animal_person_prev = None
 # and save the animal that was saved
 animal_last = None
 
+# method used to kill the animal
+animal_method = None
+
 # command to save and kill animals. for example,
 # !save
 # !kill
 animal_save_commands = ['save', 'befriend', 'bef']
-animal_kill_commands = ['kill', 'bang', 'club', 'ak47', 'shoot']
+animal_kill_commands = ['kill', 'bang', 'club', 'axe', 'ak47', 'shoot', 'spear', 'harpoon', 'choke', 'hang', 'murder', 'squash', 'squish', 'stomp', 'nuke', 'eat']
 animal_commands = ['stats', 'animal', 'animals', 'win', 'winner', 'won']
 animal_commands += animal_save_commands 
 animal_commands += animal_kill_commands 
 if debug:
     animal_commands.append('trigger')
 
-def animal_strip(animal):
-    """Strip digits from the animal name to make an easier match.
+def animal_debug(flag):
+    """Sets or clears the debug flag on the animal module.
+
+    flag : bool
+        True to turn on debugging
+    """
+    global debug
+    debug = flag
+
+def animal_name(animal):
+    """Converts the animal name into a human-readable name.
 
     animal : str
         the name of the animal
@@ -102,7 +147,17 @@ def animal_strip(animal):
     Returns:
         str : the simplified name of the animal
     """
-    return animal.strip('0123456789')
+    animal = animal.strip('0123456789')
+    if animal == 'hatched_chick': animal = 'chick'
+    elif animal == 'flag-ca': animal = 'canadian'
+    elif animal == 'male-doctor': animal = 'psychiatrist'
+    elif animal == 'male-firefighter': animal = 'fire man'
+    elif animal == 'man': animal = 'car salesman'
+    elif animal == 'person_with_headscarf': animal = 'jehovas witness'
+    elif animal == 'water_buffalo': animal = 'water buffalo'
+    elif animal == 'giraffe_face': animal = 'giraffe'
+    elif animal == 'panda_face': animal = 'panda'
+    return animal
 
 def animal_match(animal):
     """This name of an animal that does not have to be an exact match.
@@ -114,10 +169,31 @@ def animal_match(animal):
     Returns:
         tuple : (emoji:str, item=list)
     """
-    for emoji in animals.keys():
-        if emoji.find(animal) != -1:
-            return (emoji, animals[emoji])
-    return (None, None)
+    item = (None, None)
+    emoji = None
+    if animal == 'chick': emoji = 'hatched_chick'
+    elif animal == 'canadian': emoji = 'flag-ca'
+    elif animal == 'psychiatrist': emoji = 'male-doctor'
+    elif animal == 'pdoc': emoji = 'male-doctor'
+    elif animal == 'fire': emoji = 'male-firefighter'
+    elif animal == 'fireman': emoji = 'male-firefighter'
+    elif animal == 'car': emoji = 'man'
+    elif animal == 'salesman': emoji = 'man'
+    elif animal == 'jehovas': emoji = 'person_with_headscarf'
+    elif animal == 'witness': emoji = 'person_with_headscarf'
+    elif animal == 'jw': emoji = 'person_with_headscarf'
+    elif animal == 'water buffalo': emoji = 'water_buffalo'
+    elif animal == 'giraffe': emoji = 'giraffe_face'
+    elif animal == 'panda': emoji = 'panda_face'
+    if debug: print 'animal_match: emoji=', emoji
+    if emoji:
+        item = (emoji, animals[emoji])
+    else:
+        for emoji in animals.keys():
+            if emoji.find(animal) != -1:
+                item = (emoji, animals[emoji])
+                break
+    return item
 
 def animal_info(animal):
     """This gets the stats info for a specific animal.
@@ -139,13 +215,18 @@ def animal_pick():
     """Picks an animal for the animal list at random.
 
     Returns:
-        tuple : (emoji:str, sound:str, saved:int, killed:int)
+        tuple : (emoji:str, sound:str, saved:int, killed:int, method:dict)
     """
     emoji = random.choice(animals.keys())
     sound = animals[emoji][0]
     saved = animals[emoji][1]
     killed = animals[emoji][2]
-    return (emoji, sound, saved, killed)
+    try:
+        method = animals[emoji][3]
+    except:
+        method = {}
+    if debug: print 'animal_pick: method=', method
+    return (emoji, sound, saved, killed, method)
 
 def animal_game(item=None):
     """The output that is sent to the chat window by the bot
@@ -155,7 +236,7 @@ def animal_game(item=None):
         str : text
     """
     global animal_person, animal_last
-    if debug: print 'animal_game: item=', item
+    if debug: print 'animal_game: item(1)=', item
     if debug: print 'animal_game: animal_person=', animal_person
     if debug: print 'animal_game: animal_person_prev=', animal_person_prev
     if debug: print 'animal_game: animal_last=', animal_last
@@ -163,8 +244,10 @@ def animal_game(item=None):
     animal_person = 'newton'
     if item is None:
         item = animal_pick()
-    (emoji, sound, saved, killed) = item
+    if debug: print 'animal_game: item(2)=', item
+    (emoji, sound, saved, killed, method) = item
     animal_last = emoji
+    #animal = animal_name(emoji).upper()
     result = "`%s`   :%s:\n" % (sound.upper(), emoji)
     return result
 
@@ -175,7 +258,9 @@ def animal_game_chime():
         str : the result of animal_game
     """
     item = ['rooster'] + animals['rooster']
-    #print 'animal_game_chime: item=', item
+    if debug: print 'animal_game_chime: item=', item
+    if len(item) <= 4:
+        item.append({})
     return animal_game(item)
 
 def animal_save(user):
@@ -195,7 +280,7 @@ def animal_save(user):
         return None
     animal_person_prev = animal_person = user
     if user not in animal_stats:
-        animal_stats[user] = [0, 0]
+        animal_stats[user] = [0, 0, {}]
     # first index is the save stats
     animal_stats[user][0] += 1
     # the second index is the save stats
@@ -206,13 +291,16 @@ def animal_save(user):
     if debug: print 'animal_save: animal_person_prev(2)=', animal_person_prev
     return animal_person_prev
 
-def animal_kill(user):
+def animal_kill(command, user):
     """Called when a user makes a kill.
 
+    command : str
+        the method of killing
     user : str
         the nickname of the user
     """
     global animal_person, animal_person_prev
+    if debug: print 'animal_kill: command=', command
     if debug: print 'animal_kill: user=', user
     if debug: print 'animal_kill: animal_person=', animal_person
     if debug: print 'animal_kill: animal_person_prev=', animal_person_prev
@@ -222,12 +310,30 @@ def animal_kill(user):
         return None
     animal_person_prev = animal_person = user
     if user not in animal_stats:
-        animal_stats[user] = [0, 0]
+        animal_stats[user] = [0, 0, {}]
     # second index is the kill stats
     animal_stats[user][1] += 1
-    # the third index is the save stats
+    # if the third index is missing, add it
+    if len(animal_stats[user]) < 3:
+        animal_stats[user].append({})
+    # third index is the kill method
+    if command in animal_stats[user][2]:
+        animal_stats[user][2][command] += 1
+    else:
+        animal_stats[user][2][command] = 1
     if animal_last in animals:
+        if debug: print 'animal_kill: animals[animal_last]=', animals[animal_last]
+        # the third index is the kill stats
         animals[animal_last][2] += 1
+        # the fourth index is the method of kill dictionary
+        if len(animals[animal_last]) <= 3:
+            animals[animal_last].append({})
+        d = animals[animal_last][3]
+        if command not in d:
+            d[command] = 1
+        else:
+            d[command] += 1
+        animals[animal_last][3] = d
     # clear the animal person for the next game
     animal_person = None
     if debug: print 'animal_kill: animal_person_prev(2)=', animal_person_prev
@@ -250,18 +356,22 @@ def animal_print_stats(animal=None):
         if debug: print 'animal_print_stats: item=', item
         if emoji:
             (saved, killed) = (item[1], item[2])
-            animal = animal_strip(emoji).upper()
-            result = "\n:%s: %d *%s* saved and %d killed" % (
-                animal, saved, animal, killed)
-
+            animal = animal_name(emoji).upper()
+            result = "\n:%s: %d *%s* saved and %d killed\n" % (
+                emoji, saved, animal, killed)
+            if debug: print 'animal_print_stats: item[3]=', item[3]
+            # index 3 is the method of kill
+            for method in sorted(item[3]):
+                result += '%s=%d, ' % (method, item[3][method])
+            result += '\n'
     else:
         for emoji in sorted(animals):
             sound = animals[emoji][0]
             saved = animals[emoji][1]
             killed = animals[emoji][2]
-            animal = animal_strip(emoji).upper()
+            animal = animal_name(emoji).upper()
             result += "\n:%s: %d *%s* saved and %d killed" % (
-                animal, saved, animal, killed)
+                emoji, saved, animal, killed)
     return result
 
 def animal_user_stats(user, arg):
@@ -282,9 +392,18 @@ def animal_user_stats(user, arg):
     if arg:
         user = arg
     if user in animal_stats:
-        (saves, kills) = animal_stats[user]
-        result = "%s has saved %d animals and killed %d animals." % \
+        item = animal_stats[user]
+        # check there are enough items to unpack
+        if len(item) > 2:
+            (saves, kills, method) = item
+        else:
+            (saves, kills) = item
+            method = None
+        result = "%s has saved %d animals and killed %d animals.\n" % \
             (user, saves, kills)
+        if method:
+            for item in sorted(method):
+                result += "%s=%d, " % (item, method[item])
     else:
         result = "%s has neither saved or killed an animal." % user
 
@@ -293,7 +412,13 @@ def animal_user_stats(user, arg):
     top_kills = 0
     top_kills_user = None
     for user in animal_stats:
-        (saves, kills) = animal_stats[user]
+        item = animal_stats[user]
+        # check there are enough items to unpack
+        if len(item) > 2:
+            (saves, kills, method) = item
+        else:
+            (saves, kills) = item
+            method = None
         if saves > top_saves:
             top_saves = saves
             top_saves_user = user
@@ -333,15 +458,32 @@ def animal_winner(user, action=None):
             else:
                 result = "\n`%s` WON" % animal_person_prev
     else:
-        the_animal = animal_strip(animal_last).upper()
-        if action is None:
-            result = "\nTOO LATE"
-        elif action is 'query':
-            result = "\n`%s` WON" % animal_person_prev
-        elif action is 'save':
-            result = "\n%s saved a %s. Good job!" % (animal_person_prev, the_animal)
-        elif action is 'kill':
-            result = "\n%s killed a %s. You must be hungry." % (animal_person_prev, the_animal)
+        if animal_last:
+            the_animal = animal_name(animal_last).upper()
+            if action is None:
+                result = "\nTOO LATE"
+            elif action is 'query':
+                result = "\n`%s` WON" % animal_person_prev
+            elif action is 'save':
+                result = "\n%s saved a %s. Good job!" % (animal_person_prev, the_animal)
+            elif action is 'kill':
+                method = animal_method
+                if animal_method == 'kill': method = 'killed'
+                elif animal_method == 'bang': method = 'banged'
+                elif animal_method == 'club': method = 'clubbed'
+                elif animal_method == 'axe': method = 'axed'
+                elif animal_method == 'ak47': method = 'postalized'
+                elif animal_method == 'shoot': method = 'shot'
+                elif animal_method == 'spear': method = 'speared'
+                elif animal_method == 'harpoon': method = 'harpooned'
+                elif animal_method == 'choke': method = 'choked'
+                elif animal_method == 'hang': method = 'hanged'
+                elif animal_method == 'murder': method = 'murdered'
+                elif animal_method == 'squash': method = 'squashed'
+                elif animal_method == 'stomp': method = 'stomped'
+                elif animal_method == 'nuke': method = 'nuked'
+                elif animal_method == 'eat': method = 'ate'
+                result = "\n%s %s a %s. You must be hungry." % (animal_person_prev, method, the_animal)
     return result
 
 def animal_command_handler(user, command, query):
@@ -357,26 +499,38 @@ def animal_command_handler(user, command, query):
     Returns:
         str : the text result
     """
+    global animal_enabled
+    global animal_method
     if debug: print 'animal_command_handler: user=', user
     if debug: print 'animal_command_handler: command=', command
     if debug: print 'animal_command_handler: query=', query
     result = ''
     tokens = query.split(' ')
+    # is the name animal?
     if len(tokens) >= 1:
         arg = tokens[0]
     else:
         arg = 'newton'
-    if command in animal_save_commands:
+    # enable or disable the animal game
+    if command == 'off':
+        animal_enabled = False
+    elif command == 'on':
+        animal_enabled = True
+    elif command in animal_save_commands:
         if animal_save(user):
             action = 'save'
         else:
             action = None
         result = animal_winner(user, action=action)
     elif command in animal_kill_commands:
-        if animal_kill(user):
+        if command == 'squish':
+            command = 'squash'
+        if animal_kill(command, user):
             action = 'kill'
+            animal_method = command
         else:
             action = None
+            animal_method = None
         result = animal_winner(user, action=action)
     elif command == 'stats':
         result = animal_user_stats(user, arg)
@@ -397,23 +551,34 @@ def animal_dump():
     try:
         pickle.dump(data, open(animal_database, "wb"))
     except Exception as e:
-        print 'animal_save: Error:', e
+        print 'animal_dump: Error:', e
 
 def animal_load():
     """Load the animal stats from the "database".
     """
     global animals, animal_stats
     if debug: print 'animal_load:', animal_database
-    try:
-        animals_old = animals
-        data = pickle.load(open(animal_database, "rb"))
-        animals, animal_stats = data
-        # add any new animals
-        for animal in animals_old:
-            if animal not in animals:
-                animals[animal] = animals_old[animal]
-    except Exception as e:
-        print 'animal_save: Error:', e
+    if os.path.isfile(animal_database):
+        try:
+            animals_old = animals
+            data = pickle.load(open(animal_database, "rb"))
+            animals, animal_stats = data
+            # add any new animals
+            for animal in animals_old:
+                if animal not in animals:
+                    animals[animal] = animals_old[animal]
+        except Exception as e:
+            print 'animal_load: Error:', e
+
+def animal_enable(flag=True):
+    """Enable the playing of the animal game.
+
+    flag : Bool
+        True to enable, False to disable
+    """
+    global animal_enabled
+    animal_enabled = flag
+
 
 # are we running this script from the command line?
 if __name__ == '__main__':

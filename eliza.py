@@ -26,6 +26,14 @@ debug = False
 CREATOR_MATCH = "andy"
 CREATOR_NAME = "Andy"
 
+def eliza_debug(flag):
+    """Sets or clears the debug flag on the eliza module.
+
+    flag : bool
+        True to turn on debugging
+    """
+    global debug
+    debug = flag
 
 reflections = {
     "am": "are",
@@ -290,6 +298,8 @@ def myanalyze(nick, statement):
         response = "I have SDS"
     elif "sds" in text:
         response = "Super Duper Syndrome"
+    elif "sorry" in text or "pardon" in text:
+        response = "Pardon me!"
     elif "bug" in text:
         response = "I always have some bugs."
     elif "gun" in text:

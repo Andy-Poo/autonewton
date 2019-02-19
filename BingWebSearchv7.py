@@ -46,6 +46,11 @@ def Bing(term, youtube=False):
     #import pprint
     #pp = pprint.PrettyPrinter(indent=4)
     #pp.pprint(data)
+    if 'statusCode' in data:
+        if data['statusCode'] != 0:
+            if 'message' in data:
+                return data['message']
+            return ''
     try:
         if youtube and 'images' in data:
             page = data['images']

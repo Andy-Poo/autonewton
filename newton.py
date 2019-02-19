@@ -584,6 +584,7 @@ class Newton:
         """
         self.time0 = time.time()
         animal.animal_load()
+        animal.animal_enable()
         self.countdown = 0
         if self.slack_client.rtm_connect(with_team_state=False):
             print time.strftime('%Y/%m/%d %H:%M:%S', time.localtime(self.time0))
@@ -614,9 +615,9 @@ class Newton:
                 if self.channel:
                     if self.countdown == 0:
                         if debug:
-                            # random interval between 30 and 120 seconds
-                            low = 30
-                            high = 120
+                            # random interval between 10 and 60 seconds
+                            low = 10
+                            high = 60
                         else:
                             # random interval between 5 and 20 minutes
                             low = 60*5
@@ -1521,12 +1522,18 @@ class Newton:
                         self.countdown = 0
                         if bot_command == 'debug2':
                             debug = debug2 = True
+                            animal.animal_debug(True)
+                            eliza.eliza_debug(True)
                         elif bot_command == 'debug':
                             debug = True
                             debug2 = False
+                            animal.animal_debug(True)
+                            eliza.eliza_debug(True)
                         elif bot_command == 'off':
                             debug = False
                             debug2 = False
+                            animal.animal_debug(False)
+                            eliza.eliza_debug(False)
                     elif bot_command in ('version', 'ver'):
                         from version import version
                         result = version()
@@ -1600,6 +1607,7 @@ if __name__ == "__main__":
     try:
         newton = Newton()
         newton.slack()
+        abort()
     except Exception as e:
         import traceback
         traceback.print_exc()
