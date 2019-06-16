@@ -91,15 +91,6 @@ OFFICIAL AUTONEWTON WEBSITE
 
 http://autonewton.com
 
-This is a site that supports people who have mental illness or
-know someone who does and is looking for help.
-
-We also have a lot of laughs and the autonewton bot is one way
-we have some fun.
-
-If you think you have a mental illness or close to someone who does,
-please come and join us.
-
 The Slack chat room used by autonewton.com was used to develop
 the autonewton bot and was tested by real members in a real chat room.
 
